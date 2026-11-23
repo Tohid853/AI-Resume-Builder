@@ -1,99 +1,9 @@
-# import streamlit as st
-# import requests
-# from io import BytesIO
-# from reportlab.lib.pagesizes import A4
-# from reportlab.pdfgen import canvas
-
-# st.title("AI Resume Builder")
-
-# name = st.text_input("Enter Your Name")
-# email = st.text_input("Enter Your Email")
-# skills = st.text_area("Enter Your Skills")
-# exp = st.text_area("Enter Your Expirence")
-# projects = st.text_area("Enter Your Projects")
-
-# key =st.secrets["OPENROUTER_API_KEY"]
-
-# if st.button("Generate"):
-#     if not name  or not email or not skills or not exp or not projects:
-#         st.warning("Plz Fill All Fields")
-#     else:
-#         with st.spinner("Resume Building..."):
-#             url = "https://openrouter.ai/api/v1/chat/completions"
-#             headers = {
-#                         "Authorization" : f"Bearer {key}",
-#                         "Content-Type": "application/json"
-#                     }
-#             body = {
-#                         "model":"openai/gpt-4o-mini",
-#                         "messages":[
-#                             {
-#                                 "role":"user",
-#                                 "content":f"Create A Professional Freasher Resume Name:{name} , Email: {email} , Skills:{skills} , Experence:{exp} , Projects:{projects} Generate Resume Used Clear Headings and Bullets Points"
-#                             }
-#                         ]
-#                     }
-#             try:
-#                 responce = requests.post(
-#                 url,
-#                 headers=headers,
-#                 json=body,
-#                 timeout=60
-#                 )
-#                 data = responce.json()
-#                 resume = data['choices'][0]['message']['content']
-#                 st.success("Resume Generate Sucessfuly")
-#                 st.markdown(resume)
-#             except requests.RequestException as e :
-#                 st.error(e)
-                            
-                        
-#                 #generate PDF
-#                 pdfBuffer=BytesIO()
-
-#                 pdf=canvas.Canvas(
-#                 pdfBuffer,
-#                 pagesize=A4
-#                 )
-#                 width,height=A4
-#                 y=height-50
-#                 pdf.setFont("Helvetica-Bold",16)
-#                 test=f"email:{email}"
-#                 pdf.drawString(50,y,test)
-#                 y-=20
-#                 pdf.setFont("Helvetica-Bold",10)
-#                 for  line in resume.split("\n"):
-#                     if y>50:
-#                         pdf.showPage()
-#                         y=height-50
-#                         pdf.setFont("Helvetica-Bold",10)
-#                         line=line
-#                         if line.split():
-#                             pdf.drawString(50,y,line[:100])
-#                             y-=20
-#             pdf.save()
-#             pdfBuffer.seek(0)
-#             st.download_button(
-#                 label="Download CV in PDF",
-#                 data=pdfBuffer,
-#                 file_name="MY CV",
-#                 mime="application/pdf"
-#             )
-# Resume Builder
-
-# Name
-# email
-# Phone
-# equcation
-# exp
-# skills
-
-
 import streamlit as st
 import requests
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from io import BytesIO
+import re
 
 st.title("Resume Bulder")
 
@@ -111,7 +21,7 @@ if st.button("Generate Resume"):
         st.warning("Please Fill All details")
     else:
         with st.spinner("Generation Resume...."):
-            key =st.secrets["OPENROUTER_API_KEY"]
+            key = st.secrets["OPENROUTER_API_KEY"]
             url = "https://openrouter.ai/api/v1/chat/completions"
 
             headers = {
@@ -141,7 +51,19 @@ if st.button("Generate Resume"):
                 result = data["choices"][0]["message"]["content"]
                 st.success("Resume Generated Sucessfully")
                 st.markdown(result)
+                # Remove Markdown headings (#)
+                result = re.sub(r'#+\s*', '', result)
 
+                # Remove bold and italic stars (** and *)
+                result = result.replace("**", "").replace("*", "")
+
+               # Remove extra blank lines
+                result = re.sub(r'\n\s*\n+', '\n', result)
+
+              # Remove extra spaces
+                result = re.sub(r'[ \t]+', ' ', result)
+
+                result = result.strip()
                 # Generate PDF
 
                 pdfBuffer = BytesIO()
@@ -157,13 +79,13 @@ if st.button("Generate Resume"):
                 pdf.setFont("Helvetica-Bold" , 16)
                 pdf.drawString(50,y,name)
 
-                y -= 30
+                y -= 20
 
                 pdf.setFont("Helvetica-Bold" , 10)
                 test = f"Email : {email} | Phone : {phone}"
                 pdf.drawString(50 , y , test)
 
-                y -= 35
+                y -= 25
 
                 pdf.setFont("Helvetica-Bold" , 10)
 
@@ -176,7 +98,7 @@ if st.button("Generate Resume"):
                     if line.split():
                         pdf.drawString(50,y,line[:100])
 
-                    y -= 20
+                    y -= 15
                 pdf.save()
                 pdfBuffer.seek(0)
 
@@ -186,8 +108,21 @@ if st.button("Generate Resume"):
                     file_name="My CV",
                     mime="application/pdf"
                 )
-            except requests.RequestException as e :
-                 st.error(e)        
-              
-            
-            
+                    
+                
+
+
+
+
+
+
+
+
+
+            except Exception as e:
+                st.error(e)       
+
+
+
+
+
